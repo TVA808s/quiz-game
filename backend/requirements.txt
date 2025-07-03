@@ -1,0 +1,9 @@
+django
+djangorestframework
+django-cors-headers
+channels
+psycopg2-binary
+djangorestframework-simplejwt
+drf-yasg
+python-dotenv
+faker

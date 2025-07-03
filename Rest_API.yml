@@ -1,0 +1,217 @@
+openapi: '3.0.3'
+info:
+  title: Quiz Game API
+  version: '1.0'
+  description: API для мультиплеерной викторины
+servers:
+  - url: http://localhost:8000
+    description: Локальный сервер
+
+paths:
+  /main:
+    get:
+      summary: Главный хаб
+      description: Страница с открытыми комнатами и общей информацией
+      responses:
+        '200':
+          description: Главная открыта
+        '500':
+          description: Ошибка сервера
+  /search:
+    get:
+      summary: Страница поиска
+      description: Возможность найти пользователя по нику или почте, лобби по ключу
+      responses:
+        '200':
+          description: 'Поиск открыт'
+    post:
+      summary: Поиск
+      requestBody:
+        required: true
+        description: Ник или почта игрока или ключ лобби
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Search'
+      responses:
+        '201':
+          description: Найдены результаты
+        '400':
+          description: Ошибка сервера
+  
+  /friends:
+    get:
+      summary: Друзья пользователя
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успешный вход
+        '400':
+          description: Ошибка сервера
+        '401':
+          description: Перенаправление на регистрацию
+
+  /leaderboard:
+    get:
+      description: Список игроков отсортированных по рейтингу и периоду (неделя, месяц, год, все время), по умолчанию за все время
+      responses:
+        '200':
+          description: Рейтинг открыт
+        '400':
+          description: Ошибка сервера
+    post:
+      summary: Выбор периода
+      requestBody:
+        required: true
+        description: период
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchPeriod'
+      responses:
+        '200':
+          description: успех
+        '400':
+          description: Ошибка сервера
+  
+  /lobby/{lobbyId}:
+    get:
+      summary: Страница ожидания игры
+      description: Вход в чужой лобби
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: id лобби
+      responses:
+        '200':
+          description: Успешный вход
+        '404':
+          description: Не найдено
+    post:
+      description: Создание и вход в лобби
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Комната создана
+        '400':
+          description: Ошибка сервера
+        '401':
+          description: Перенаправление на регистрацию
+
+  /users/{userId}:
+    get:
+      summary: Страница пользователя
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: id пользователя
+      responses:
+        '200':
+          description: Данные пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /registration:
+    post:
+      summary: Создание пользователя
+      requestBody:
+        required: true
+        description: Данные пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+      responses:
+        '201':
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  
+  /authorization:
+    post:
+      summary: Вход в аккаунт
+      requestBody:
+        required: true
+        description: Данные пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAuthentication'
+      responses:
+        '200':
+          description: Успешный вход
+        '401':
+          description: Неверные данные
+
+  /profile:
+    get:
+      summary: Профиль пользователя
+      description: Полные данные пользователя, история игр, рейтинг
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Доступ разрешен
+        '401':
+          description: Перенаправление на регистрацию
+
+    
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Search:
+      type: string
+    SearchPeriod:
+      type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        email:
+          type: string
+          example: example@example.com
+        name:
+          type: string
+          example: Joe Biden
+      required: [id, email, name]
+
+    UserRegistration:
+      type: object
+      properties:
+        name: 
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+          format: password
+      required: [name, email, password]
+    
+    UserAuthentication:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          format: password
+      required: [email, password]
