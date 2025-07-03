@@ -1,0 +1,1157 @@
+openapi: '3.0.3'
+info:
+  title: Quiz Game API
+  version: '1.0'
+  description: API для мультиплеерной викторины
+servers:
+  - url: http://localhost:8000
+    description: Локальный сервер
+tags:
+  - name: Authentication
+    description: Авторизация, регистрация пользователей
+  - name: User operations
+    description: Операции с пользователем
+  - name: Finding
+    description: Нахождение игр
+  - name: Game
+    description: Ожидание и игра
+  - name: Social
+    description: Социальные взаимодействия
+
+# НА ПРОДАКШАНЕ СМЕНИТЬ СЕРВЕР И ПРОТОКОЛ
+
+paths:
+  /main:
+    get:
+      summary: Главный хаб
+      description: Страница с открытыми комнатами и общей информацией
+      tags: ['Finding']
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Главная открыта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicLobbies'
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+  /search:
+    get:
+      summary: Страница поиска
+      description: Возможность найти пользователя по нику или почте, лобби по ключу
+      tags: ['Finding']
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: 'Поиск открыт'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Results'
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+    post:
+      summary: Поиск
+      tags: ['Finding']
+      requestBody:
+        required: true
+        description: Ник или почта игрока или ключ лобби
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Search'
+            example: 
+              search: 'anton'
+      responses:
+        '201':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Найдены результаты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Results'
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+  
+  /friends:
+    get:
+      summary: Друзья пользователя
+      tags: ['Social']
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FriendsList'
+              example:
+                count: 2
+                friends:
+                  - id: 2
+                    username: "misha336"
+                    avatar: "5.png"
+                  - id: 3
+                    username: "nikitos"
+                    avatar: "3.png"
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+
+  /leaderboard:
+    get:
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [week, month, year, all]
+            default: all
+          description: Период получения очков
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Пагинация, 10 на одной странице
+      description: Список игроков отсортированных по рейтингу и периоду с пагинацией
+      tags: ['Social']
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Рейтинг открыт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderBoardData'
+              example:
+                period: all
+                players: [
+                  {
+                    username: nikitos,
+                    earned_points: 283,
+                    possible_points: 400,
+                    average: 71%
+                  },
+                  {
+                    username: anton228,
+                    earned_points: 184,
+                    possible_points: 320,
+                    average: 58%
+                  },
+                  {
+                    username: anton88,
+                    earned_points: 89,
+                    possible_points: 240,
+                    average: 37%
+                  },
+                ]
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+    post:
+      summary: Выбор периода
+      tags: ['Social']
+      requestBody:
+        required: true
+        description: период
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchPeriod'
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: успех
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Results'
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+  
+  /lobby/{lobbyId}:
+    get:
+      summary: Страница ожидания игры
+      description: Вход в чужой лобби
+      tags: ['Game']
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: id лобби
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicLobby'
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+    post:
+      description: Создание и вход в лобби
+      tags: ['Game']
+      parameters:
+        - name: lobbyId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: id лобби
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Комната создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateLobby'
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+
+  /game/{gameId}/ws:
+    get:
+      description: WebSocket соединение для игрового процесса, используется временный токен сессии
+      tags: ['Game']
+      parameters:
+        - name: gameId
+          in: path
+          required: true
+          schema:
+            type: integer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameData'
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+
+  /users/{userId}:
+    get:
+      summary: Страница пользователя
+      tags: ['User operations']
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: id пользователя
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Данные пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+
+  /registration:
+    post:
+      summary: Создание пользователя
+      tags: ['Authentication']
+      requestBody:
+        required: true
+        description: Данные пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+            example:
+              username: 'anton88'
+              email: 'anton@quiz.com'
+              password: 'S0m3_pa55word!'
+      responses:
+        '201':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Пользователь создан, перенаправление на главную
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirect:
+                    type: string
+                    example: /authorization
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+  
+  /authorization:
+    post:
+      summary: Вход в аккаунт
+      tags: ['Authentication']
+      requestBody:
+        required: true
+        description: Данные пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAuthorization'
+            example:
+              email: 'anton@quiz.com'
+              password: 'S0m3_pa55word!'
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Успешный вход, перенаправление на главную
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirect:
+                    type: string
+                    example: /main
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+
+  /profile:
+    get:
+      summary: Профиль пользователя
+      description: Полные данные пользователя, история игр, рейтинг
+      tags: ['User operations']
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+              example: https://trusted.com
+          description: Доступ разрешен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUser'
+        '400':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '400 Bad request'
+                message: При выполнении запроса произошла ошибка, попробуйте ещё раз
+        '401':
+          description: Неверные данные, перенаправление на авторизацию
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '401 Unauthorized'
+                message: Войдите в аккаунт для выполнения этого действия
+        '404':
+          description: Страница не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '404 Not found'
+                message: Страница не найдена, проверьте URL запроса
+        '500':
+          description: Ошибка обработки данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: '500 Internal server error'
+                message: Наш сервер столкнулся с непредвиденной ошибкой, подождите пока мы его исправляем и повторите запрос
+
+                
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error, message]
+
+    Search:
+      type: object
+      properties:
+        search: 
+          type: string
+          example: anton22
+
+    SearchPeriod:
+      type: object
+      properties:
+        period:
+          type: string
+          example: week
+
+    GameData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        quiz:
+          type: object
+          properties:
+            title:
+              type: string
+            category:
+              type: string
+            difficulty:
+              type: string
+              enum: [easy, medium, hard, mixed]
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              username:
+                type: string
+              avatar:
+                type: string
+                example: 1.png
+              gained_points:
+                type: integer
+              all_points:
+                type: integer
+              
+
+    LeaderBoardData:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [week, month, year, all]
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              username: 
+                type: string
+              earned_points:
+                type: integer
+              possible_points:
+                type: integer
+              average:
+                type: string
+                example: 42%
+
+    Results:
+      type: object
+      properties:
+        lobbies:
+          $ref: '#/components/schemas/PublicLobbies'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicUser'
+      example:
+        lobbies: 
+          [
+            title: TOP 10 LINUX QUESTIONS,
+            category: hard,
+            max_players: 4,
+            current_players: 2,
+            created_at: '2025-07-03T18:23:00Z'
+          ]
+        users:
+          [
+            username: TOPTIP,
+            total_games: 6,
+            possible_points: 60,
+            earned_points: 23,
+            friends: [],
+            avatar: '2.png'
+          ] 
+
+    PublicUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+          example: Joe Biden
+        total_games: 
+          type: integer
+          example: 273
+        possible_points:
+          type: integer
+          example: 2730
+        earned_points:
+          type: integer
+          example: 1956
+        friends:
+          $ref: '#/components/schemas/FriendsList'
+        avatar:
+          type: string
+          example: '4.png'
+        average: 
+          type: string
+          example: 42%
+      required: [id, username, total_games, possible_points, earned_points, avatar]
+
+    PublicLobbies:
+      type: array
+      items:
+        type: object
+        properties:
+          title: 
+            type: string
+            example: TOP 10 LINUX QUESTIONS
+          category: 
+            type: string
+            example: hard
+          max_players:
+            type: integer
+            example: 4
+          current_players:
+            type: integer
+            example: 2
+          created_at:
+            type: string
+            format: date-time
+            example: '2025-07-03T18:23::00Z'
+        
+    FriendsList:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: Количество друзей
+        friends:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicUser'
+      example:
+        count: 2
+        friends:
+          - username: misha336
+            total_games: 35
+            possible_points: 350
+            earned_points: 235
+            friends: []
+          - username: nikitos
+            total_games: 23
+            possible_points: 230
+            earned_points: 107
+            friends: []
+      required: [count, friends]
+
+    PrivateUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        email:
+          type: string
+          format: email
+          example: example@example.com
+        username:
+          type: string
+          example: Joe Biden
+        total_games: 
+          type: integer
+          example: 273
+        possible_points:
+          type: integer
+          example: 2730
+        earned_points:
+          type: integer
+          example: 1956
+        friends:
+          $ref: '#/components/schemas/FriendsList'
+        avatar:
+          type: string
+          example: '4.png'
+      required: [id, email, username, total_games, possible_points, earned_points, friends, avatar]
+
+    PublicLobby:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        quiz_id:
+          type: integer
+          description: id квиза
+        creator:
+          $ref: '#/components/schemas/PublicUser'
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicUser'
+        visibility:
+          type: string
+          enum: [public, private, friends]
+        status:
+          type: string
+          enum: [waiting, starting]
+        max_players:
+          type: integer
+          default: 4
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-07-03T18:23::00Z'
+      required: [id, quiz_id, creator, players, visibility, status, max_players, created_at]
+
+    PrivateLobby:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        quiz_id:
+          type: integer
+          description: id квиза
+        creator:
+          $ref: '#/components/schemas/PublicUser'
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicUser'
+        key:
+          type: string
+          example: ff25a9I00
+          description: ключ комнаты
+        visibility:
+          type: string
+          enum: [public, private, friends]
+        status:
+          type: string
+          enum: [waiting, starting]
+        max_players:
+          type: integer
+          default: 4
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-07-03T18:23::00Z'
+      required: [id, quiz_id, creator, players, key, visibility, status, max_players, created_at]
+
+    UserRegistration:
+      type: object
+      properties:
+        username: 
+          type: string
+          example: 'nikitos'
+        email:
+          type: string
+          example: n1k1ttoz@quiz.com
+        password:
+          type: string
+          format: password
+          minLength: 10
+          example: S0m3_pa55word!
+      required: [username, email, password]
+    
+    UserAuthorization:
+      type: object
+      properties:
+        email:
+          type: string
+          example: n1k1ttoz@quiz.com
+        password:
+          type: string
+          format: password
+          minLength: 10
+          example: S0m3_pa55word
+      required: [email, password]

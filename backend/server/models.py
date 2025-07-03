@@ -68,7 +68,6 @@ class Lobby(models.Model):
     creator = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='created_lobbies')
     players = models.ManyToManyField(Users, related_name='joined_lobbies')
     key = models.CharField(max_length=8, unique=True)
-    password = models.CharField(max_length=16, blank=True, null=True)
     visability = models.CharField(choices=VISABILITY)
     status = models.CharField(choices=STATUS)
     max_players = models.PositiveBigIntegerField(default=4)
